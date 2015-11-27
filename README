@@ -1,0 +1,2 @@
+In your venv, do pip install flask
+pip install sqlalchemy

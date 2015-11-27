@@ -1,0 +1,5 @@
+SQL relational DB - Used because small dataset
+
+If this were going to be used for a larger dataset that needed to be broken up and scaled across servers, would use a NoSql like MongoDB?
+
+Also, sqlite3 is builtin to python
