@@ -1,35 +1,23 @@
-from flask import Flask, request
-app = Flask(__name__)
+from flask import Flask, request, jsonify, g
+import sqlite3, json
+from sqlalchemy import create_engine
+import dbDefinition
+#g = flask.g = Application Global , store DB connection here
 
+app = Flask(__name__)
 #make sure to disable this flag 
 app.debug = True
 
 # to return a custom HTTP Code do return "value", <code> :D
-
-@app.route('/', methods=['GET'])
-def getRecord():
-    #GET /users/<userid>
-    #Returns the matching user record or 404 if none exists.
-    return "User Record"
-
-
-@app.route('/', methods=['DELETE'])
-def deleteUser():
-    #DELETE /users/<userid>
-    #Deletes user record. Returns 404 if the user doesn't exist
-    data = request.get_data()
-    return data
-
 @app.route('/users', methods=['POST'])
 def postRecord():
     #POST /users
     #Creates a new user record using valid user record (JSON).
     #POSTs to existing users should be treated as errors
-    #Read JSON input : data = request.get_data()
-    #Parse out JSON
-    #put into DB
-    data = request.get_data()
-    return data
+    
+    print request.get_json()
+    print request.headers
+    return jsonify(request.get_json())
 
 @app.route('/users/<userid>', methods=['GET', 'DELETE', 'PUT'])
 def usersLogic(userid):
@@ -57,9 +45,8 @@ def groupLogic(group_name):
     if request.method == 'PUT':
         return userid
 
-
-
 if __name__=='__main__':
+    dbDefinition.init_db() #Will create DB if it doesn't exist
     app.run()
 """
 #Use app.route('/', methods=DESIRED) for splitting methods
