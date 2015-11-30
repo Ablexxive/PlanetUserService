@@ -1,29 +1,54 @@
 from flask import Flask, request, jsonify, g
 import sqlite3, json
 from sqlalchemy import create_engine
-import dbDefinition
+from sqlalchemy.orm import sessionmaker
+import dbDef
 #g = flask.g = Application Global , store DB connection here
 
 app = Flask(__name__)
 #make sure to disable this flag 
 app.debug = True
 
+@app.before_request
+def before_request():
+    g.db = Session()  #creates session as g.db to add users to
+
+@app.teardown_request #why exception?
+def teardown_request(exception):
+    db = getattr(g, 'db', None)
+    if db is not None:
+        db.close()
+    
 # to return a custom HTTP Code do return "value", <code> :D
 @app.route('/users', methods=['POST'])
 def postRecord():
     #POST /users
     #Creates a new user record using valid user record (JSON).
-    #POSTs to existing users should be treated as errors
+    #POSTs to existing users should be treated as errors 
+    jsonData = request.get_json()
     
-    print request.get_json()
-    print request.headers
+    for user in g.db.query(dbDef.User).\
+            filter(dbDef.User.userid == jsonData["userid"]):
+        if user != None: 
+            #TODO: look up HTTP code
+            return "user already exists!", 404
+
+    user = dbDef.User(first_name=jsonData["first_name"],
+                    last_name=jsonData["last_name"],
+                    userid=jsonData["userid"])
+    
+    g.db.add(user)
+    g.db.commit()  #TODO: CURRENTLY GROUPS IS NOT IMPLIMENTED
     return jsonify(request.get_json())
 
 @app.route('/users/<userid>', methods=['GET', 'DELETE', 'PUT'])
 def usersLogic(userid):
     data = request.get_data()
     if request.method == 'GET':
-        return userid 
+        for user in g.db.query(dbDef.User).\
+                filter(dbDef.User.userid == userid):
+            print user
+        return userid
     if request.method == 'DELETE':
         return userid
     if request.method == 'PUT':
@@ -39,24 +64,16 @@ def postGroup():
 def groupLogic(group_name):
     data = request.get_data()
     if request.method == 'GET':
-        return userid 
+        return group_name
     if request.method == 'DELETE':
-        return userid
+        return group_name
     if request.method == 'PUT':
-        return userid
+        return group_name
 
 if __name__=='__main__':
-    dbDefinition.init_db() #Will create DB if it doesn't exist
+    dbDef.init_db() #Will create DB if it doesn't exist
+    global engine 
+    engine = create_engine('sqlite:////tmp/Planet.db')#, echo=True) 
+    global Session 
+    Session = sessionmaker(bind=engine)
     app.run()
-"""
-#Use app.route('/', methods=DESIRED) for splitting methods
-@app.route('/', methods=['PUT', 'POST'])
-def hello_world():
-    if request.method == 'POST' or request.method == 'PUT':
-        data = request.get_data()
-        print data
-        print type(data)
-        return data
-    else:
-        return 'Hello World \n'
-"""
