@@ -21,7 +21,7 @@ def teardown_request(exception):
     
 # to return a custom HTTP Code do return "value", <code> :D
 @app.route('/users', methods=['POST'])
-def postRecord():
+def usersPOST():
     #POST /users
     #Creates a new user record using valid user record (JSON).
     #POSTs to existing users should be treated as errors 
@@ -41,19 +41,26 @@ def postRecord():
     g.db.commit()  #TODO: CURRENTLY GROUPS IS NOT IMPLIMENTED
     return jsonify(request.get_json())
 
-@app.route('/users/<userid>', methods=['GET', 'DELETE', 'PUT'])
-def usersLogic(userid):
+@app.route('/users/<userid>', methods=['GET'])
+def usersGET(userid):
     data = request.get_data()
-    if request.method == 'GET':
-        for user in g.db.query(dbDef.User).\
-                filter(dbDef.User.userid == userid):
-            print user
-        return userid
-    if request.method == 'DELETE':
-        return userid
-    if request.method == 'PUT':
-        return userid
-    
+    for user in g.db.query(dbDef.User).\
+            filter(dbDef.User.userid == userid):
+        if user != None:
+            print user.jsonRep()
+            #return "test"
+            return jsonify(user.jsonRep())
+    return "User not found", 404
+
+@app.route('/users/<userid>', methods=['PUT'])
+def usersPUT(userid):
+    pass
+
+@app.route('/users/<userid>', methods=['DELETE'])
+def usersDELETE(userid):
+    pass
+
+
 @app.route('/groups', methods=['POST'])
 def postGroup():
     #Creates empty group. POSTs to an existing group should be errors.

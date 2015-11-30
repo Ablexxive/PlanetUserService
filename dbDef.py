@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker #, relationship, backref
+import json
 
 Base = declarative_base()
 
+#TODO Comments on the methods :X
 class User(Base):
     __tablename__ = 'users'
 
@@ -16,6 +18,12 @@ class User(Base):
     def __repr__(self):
         return "<User(First Name='%s', Last Name='%s', userid='%s')>" % (
                     self.first_name, self.last_name, self.userid)
+    
+    def dictRep(self):
+        #Dictionary representation which can then be jsonified 
+        data = {"first_name":self.first_name, 
+                "last_name":self.last_name, "userid":self.userid}
+        return data
 
 class Group(Base):
 	__tablename__ = 'groups'
