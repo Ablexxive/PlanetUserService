@@ -34,7 +34,8 @@ def usersPOST():
 
     user = dbDef.User(first_name=jsonData["first_name"],
                     last_name=jsonData["last_name"],
-                    userid=jsonData["userid"])
+                    userid=jsonData["userid"],
+                    groups=(','.join(jsonData["groups"])))
     
     g.db.add(user)
     g.db.commit()  #TODO: CURRENTLY GROUPS IS NOT IMPLIMENTED
@@ -74,7 +75,7 @@ def usersDELETE(userid):
     return "User not found", 404
 
 @app.route('/groups', methods=['POST'])
-def postGroup():
+def groupPost():
     #Creates empty group. POSTs to an existing group should be errors.
     jsonData = request.get_json()
     
@@ -104,16 +105,27 @@ def groupPut(group_name):
 
 @app.route('/groups/<group_name>', methods=['GET'])
 def groupGet(group_name):
-    return group_name
+    for group in g.db.query(dbDef.Group).\
+            filter(dbDef.Group.name == group_name):
+        if group != None:
+            return jsonify(group.dictRep())
+    return "Group %s not found!" % (group_name), 404
+
 @app.route('/groups/<group_name>', methods=['DELETE'])
-def groupLogic(group_name):
-    data = request.get_data()
-    if request.method == 'GET':
-        return group_name
-    if request.method == 'DELETE':
-        return group_name
-    if request.method == 'PUT':
-        return group_name
+def groupDelete(group_name):
+    for group in g.db.query(dbDef.Group).\
+            filter(dbDef.Group.name == group_name):
+        if group != None:
+            g.db.delete(group)
+            g.db.commit()
+            return "Group %s deleted!" % (group_name)
+    return "Group %s not found!" % (group_name), 404
+
+#Group member list managment methods
+#Call when you add a group
+#Should send appending lists to User's to add
+def groupToUsers(groupData):
+    pass
 
 if __name__=='__main__':
     dbDef.init_db() #Will create DB if it doesn't exist
