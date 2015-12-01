@@ -34,6 +34,11 @@ class User(Base):
         self.last_name = jsonData["last_name"]
         self.userid = jsonData["userid"]
 
+    def addGroupMembership(self, groupName):
+        print "adding %s from %s" % (self.userid, groupName)
+
+    def removeGroupMembership(self, groupName):
+        print "removing %s from %s "%(self.userid, groupName)
 class Group(Base):
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
@@ -46,7 +51,9 @@ class Group(Base):
 
     def dictRep(self):
         #Dictionary representation which can then be jsonified 
-        members = self.members.split(",")
+        members = []
+        if self.members != None:
+            members = self.members.split(",")
         data = {"name":self.name, 
                 "members":self.members}
         return data
