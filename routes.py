@@ -130,7 +130,8 @@ def groupDelete(group_name):
 #Call when you add a group
 #Should send appending lists to User's to add
 def groupToUsers(groupData):
-    groupName = groupData["name"]
+    groupName = str(groupData["name"])
+    print type(groupName)
     newList = groupData["members"]
     #1) send groupName to member to add to list
     #2) compare against old list to remove group from those members
@@ -155,11 +156,6 @@ def groupToUsers(groupData):
         if user.userid in removeList:
             print "deleting %s "%(user.userid)
             user.removeGroupMembership(groupName)
-
-#    for member in groupMembers:
-#        print "test"
-#        if member in userQuery:
-#                print member
 
 if __name__=='__main__':
     dbDef.init_db() #Will create DB if it doesn't exist
