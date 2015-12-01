@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, g
-import sqlite3, json
+import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import dbDef
@@ -13,13 +13,12 @@ app.debug = True
 def before_request():
     g.db = Session()  #creates session as g.db to add users to
 
-@app.teardown_request #why exception?
+@app.teardown_request #TODO:why exception?
 def teardown_request(exception):
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()
     
-# to return a custom HTTP Code do return "value", <code> :D
 @app.route('/users', methods=['POST'])
 def usersPOST():
     #POST /users
@@ -43,31 +42,70 @@ def usersPOST():
 
 @app.route('/users/<userid>', methods=['GET'])
 def usersGET(userid):
-    data = request.get_data()
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
         if user != None:
-            print user.jsonRep()
             #return "test"
-            return jsonify(user.jsonRep())
+            return jsonify(user.dictRep())
     return "User not found", 404
 
 @app.route('/users/<userid>', methods=['PUT'])
 def usersPUT(userid):
-    pass
+    jsonData = request.get_json()
+    print jsonData
+    print type(jsonData)
+    for user in g.db.query(dbDef.User).\
+            filter(dbDef.User.userid == userid):
+        if user != None:
+            user.updateUser(jsonData)
+            g.db.commit()
+            return jsonify(user.dictRep())
+            #return "ok"
+    return "User not found", 404
 
 @app.route('/users/<userid>', methods=['DELETE'])
 def usersDELETE(userid):
-    pass
-
+    for user in g.db.query(dbDef.User).\
+            filter(dbDef.User.userid == userid):
+        if user != None:
+            g.db.delete(user)
+            g.db.commit()
+            return "User %s deleted." % (userid)
+    return "User not found", 404
 
 @app.route('/groups', methods=['POST'])
 def postGroup():
     #Creates empty group. POSTs to an existing group should be errors.
-    data = request.get_data()
-    return data
+    jsonData = request.get_json()
+    
+    for group in g.db.query(dbDef.Group).\
+            filter(dbDef.Group.name == jsonData["name"]):
+        if group != None: 
+            #TODO: look up HTTP code
+            return "Group already exists!", 404
 
-@app.route('/groups/<group_name>', methods=['GET', 'DELETE', 'PUT'])
+    group = dbDef.Group(name=jsonData["name"],
+                   members =(','.join(jsonData["members"])))
+
+    g.db.add(group)
+    g.db.commit()  #TODO: CURRENTLY GROUPS IS NOT IMPLIMENTED
+    return jsonify(request.get_json())
+
+@app.route('/groups/<group_name>', methods=['PUT'])
+def groupPut(group_name):
+    jsonData = request.get_json()
+
+    for group in g.db.query(dbDef.Group).\
+            filter(dbDef.Group.name == group_name):
+        if group != None:
+            group.members = (','.join(jsonData["members"]))
+            return "Group %s updated" % (group_name)
+    return "Group %s not found!" % (group_name), 404
+
+@app.route('/groups/<group_name>', methods=['GET'])
+def groupGet(group_name):
+    return group_name
+@app.route('/groups/<group_name>', methods=['DELETE'])
 def groupLogic(group_name):
     data = request.get_data()
     if request.method == 'GET':

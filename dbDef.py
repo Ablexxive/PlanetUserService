@@ -13,7 +13,9 @@ class User(Base):
     first_name = Column(String)
     last_name = Column(String)
     userid = Column(String)
-    #groups 
+    groups = []
+
+    #TODO: groups 
 
     def __repr__(self):
         return "<User(First Name='%s', Last Name='%s', userid='%s')>" % (
@@ -24,6 +26,11 @@ class User(Base):
         data = {"first_name":self.first_name, 
                 "last_name":self.last_name, "userid":self.userid}
         return data
+
+    def updateUser(self, jsonData):
+        self.first_name = jsonData["first_name"]
+        self.last_name = jsonData["last_name"]
+        self.userid = jsonData["userid"]
 
 class Group(Base):
 	__tablename__ = 'groups'
