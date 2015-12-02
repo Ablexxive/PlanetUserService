@@ -62,7 +62,7 @@ def usersPUT(userid):
         if user != None:
             updateGroups(jsonData)
             user.updateUser(jsonData)
-            #g.db.commit()
+            g.db.commit()
             return jsonify(user.dictRep())
             #return "ok"
     return "User not found", 404
@@ -181,9 +181,11 @@ def updateGroups(userData):
     groupList = []
     for group in groupQuery:
         if group.name in addList:
+            group.addUser(userid)
             print "adding %s to %s" % (userid, group.name)
         
         if group.name in removeList:
+            group.removeUser(userid)
             print "removing %s from %s" % (userid, group.name)
 
         groupList.append(group.name)

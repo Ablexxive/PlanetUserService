@@ -70,6 +70,18 @@ class Group(Base):
                 "members":self.members}
         return data
 
+    def addUser(self, userid):
+        members = set(self.members.split(","))
+        members.add(userid)
+        self.members = ",".join(members)
+        print "adding %s to %s" % (userid, self.name)
+
+    def removeUser(self, userid):
+        members = set(self.members.split(","))
+        members.remove(userid)
+        self.members = ",".join(members)
+        print "removing %s from %s "%(userid, self.name)
+        
 def init_db():
     engine = create_engine('sqlite:////tmp/Planet.db')
     Base.metadata.create_all(engine)
