@@ -37,6 +37,8 @@ def usersPOST():
                     userid=jsonData["userid"],
                     groups=(','.join(jsonData["groups"])))
     
+    updateGroups(jsonData)
+    
     g.db.add(user)
     g.db.commit()  #TODO: CURRENTLY GROUPS IS NOT IMPLIMENTED
     return jsonify(request.get_json())
@@ -58,8 +60,9 @@ def usersPUT(userid):
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
         if user != None:
+            updateGroups(jsonData)
             user.updateUser(jsonData)
-            g.db.commit()
+            #g.db.commit()
             return jsonify(user.dictRep())
             #return "ok"
     return "User not found", 404
@@ -139,7 +142,7 @@ def groupToUsers(groupData):
     userQuery = g.db.query(dbDef.User)
     groupQuery = g.db.query(dbDef.Group)
     oldList = []
-    for group in groupQuery.filter(dbDef.Group.name == 'Admin'):
+    for group in groupQuery.filter(dbDef.Group.name == groupName):
         if group.members != None:
             oldList = group.members.split(",")
     
@@ -156,6 +159,42 @@ def groupToUsers(groupData):
         if user.userid in removeList:
             print "deleting %s "%(user.userid)
             user.removeGroupMembership(groupName)
+
+def updateGroups(userData):
+    userid = str(userData["userid"])
+    #1) Groups that don't exist yet == make the group
+    #2) send groups to add
+    #3) remove from groups which it no longer is in
+    userQuery = g.db.query(dbDef.User)
+    groupQuery = g.db.query(dbDef.Group)
+    newList = userData["groups"]
+    oldList = []
+
+    for user in userQuery.filter(dbDef.User.userid == userid):
+        if user.groups != None:
+            oldList = user.groups.split(",")
+
+    print oldList, newList
+    removeList = set(oldList) - set(newList)
+    addList = set(newList) - set(oldList)
+    print removeList, addList
+    groupList = []
+    for group in groupQuery:
+        if group.name in addList:
+            print "adding %s to %s" % (userid, group.name)
+        
+        if group.name in removeList:
+            print "removing %s from %s" % (userid, group.name)
+
+        groupList.append(group.name)
+
+    #Creating a new group if it doesn't exist
+    for each in addList:
+        if each not in groupList:
+            print "creating %s" % (each)
+            newGroup = dbDef.Group(name=each, members=userid)
+            g.db.add(newGroup)
+            g.db.commit()
 
 if __name__=='__main__':
     dbDef.init_db() #Will create DB if it doesn't exist

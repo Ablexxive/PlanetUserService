@@ -26,14 +26,14 @@ class User(Base):
         groups = self.groups.split(",")
         data = {"first_name":self.first_name, 
                 "last_name":self.last_name, "userid":self.userid,
-                "groups":groups}
+                "groups":self.groups.split(",")}
         return data
 
     def updateUser(self, jsonData):
         self.first_name = jsonData["first_name"]
         self.last_name = jsonData["last_name"]
         self.userid = jsonData["userid"]
-        self.groups = jsonData["groups"]
+        self.groups = ",".join(jsonData["groups"])
 
     def addGroupMembership(self, groupName):
         group = set(self.groups.split(","))
