@@ -72,8 +72,9 @@ def usersDELETE(userid):
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
         if user != None:
+        #TODO: Remove user from group when deleted
             g.db.delete(user)
-            g.db.commit()
+           # g.db.commit()
             return "User %s deleted." % (userid)
     return "User not found", 404
 
@@ -90,7 +91,7 @@ def groupPost(): #TODO: Should create a EMPTY group w/o JSON...
             return "Group already exists!", 404
     
     #group = dbDef.Group(name=data)
-    group = dbDef.Group(name=jsonData["name"]) #,
+    group = dbDef.Group(name=jsonData["name"], members="") #,
     #               members =(','.join(jsonData["members"])))
 
     g.db.add(group)
@@ -105,8 +106,20 @@ def groupPut(group_name):
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == group_name):
         if group != None:
-            groupToUsers(jsonData)
-            group.members = (','.join(jsonData["members"]))
+            #groupToUsers(jsonData)
+            
+            #Check if users exist first
+            existingUserList = []
+            for users in g.db.query(dbDef.User):
+                print users
+                if users.userid in jsonData["members"]:
+                    existingUserList.append(users.userid)
+                    print "%s included"%(users.userid)
+                else:
+                    print "%s not included"%(users.userid)
+            print existingUserList
+            group.members = (','.join(existingUserList))
+            #group.members = (','.join(jsonData["members"])) 
             g.db.commit() #Commit AFTER calling groupToUsers, to keep old/new lists in memory 
             return "Group %s updated" % (group_name)
     return "Group %s not found!" % (group_name), 404
@@ -181,6 +194,7 @@ def updateGroups(userData):
     groupList = []
     for group in groupQuery:
         if group.name in addList:
+            print group.name
             group.addUser(userid)
             print "adding %s to %s" % (userid, group.name)
         

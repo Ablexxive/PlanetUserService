@@ -70,11 +70,14 @@ class Group(Base):
                 "members":self.members}
         return data
 
-    def addUser(self, userid):
-        members = set(self.members.split(","))
-        members.add(userid)
-        self.members = ",".join(members)
-        print "adding %s to %s" % (userid, self.name)
+    def addUser(self, userid): #TODO: deal with null set
+        if self.members == None:
+            self.members = userid #done?
+        else:
+            members = set(self.members.split(","))
+            members.add(userid)
+            self.members = ",".join(members)
+            print "adding %s to %s" % (userid, self.name)
 
     def removeUser(self, userid):
         members = set(self.members.split(","))
