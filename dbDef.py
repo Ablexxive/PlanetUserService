@@ -38,39 +38,52 @@ class User(Base):
         return data
 
     def updateUser(self, jsonData):
+        """Updates user record with new data
+        :param jsonData: new user record data 
+        """
         self.first_name = jsonData["first_name"]
         self.last_name = jsonData["last_name"]
         self.userid = jsonData["userid"]
         self.groups = ",".join(jsonData["groups"])
 
     def addGroupMembership(self, groupName):
+        """Adds new group to groups list.
+        :param groupName: name of group to be added
+        """
         group = set(self.groups.split(","))
         group.add(groupName)
         self.groups = ",".join(group)
-        print self.groups
-        print "adding %s to %s" % (self.userid, groupName)
 
     def removeGroupMembership(self, groupName):
+        """Removes group name from groups list.
+        :param groupName: name of group to be removed 
+        """
         group = set(self.groups.split(","))
-        print type(groupName)
-        print group
         group.remove(groupName)
         self.groups = ",".join(group)
-        print "removing %s from %s "%(self.userid, groupName)
-        print self.groups
 
 class Group(Base):
+    """Group class. Defines table that holds group data.
+    :param id: unique id for group
+    :param name: name of group
+    :param members: string of members in the group, contains valid userids
+    """
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
-    name = Column(String) #Name of group
-    members = Column(String)	#tied to userid's from User 
+    name = Column(String)
+    members = Column(String) 
 
     def __repr__(self):
+        """Creates string representation of the group
+        :return String with all group data
+        """
         return "<Group(Name='%s', Members='%s')>" % (
                     self.name, self.members)
 
     def dictRep(self):
-        #Dictionary representation which can then be jsonified 
+        """Creates dictionary representation of the group that is easily jsonified.
+        :return dict with all group data
+        """
         members = []
         if self.members != None:
             members = self.members.split(",")
@@ -79,14 +92,20 @@ class Group(Base):
         return data
 
     def addUser(self, userid): #TODO: deal with null set
+        """Adds user to group list using userid
+        :param userid: userid of user to be added to group members
+        """
         if self.members == None:
-            self.members = userid #done?
+            self.members = userid
         else:
             members = set(self.members.split(","))
             members.add(userid)
             self.members = ",".join(members)
 
     def removeUser(self, userid):
+        """Removes user from group list 
+        :param userid: userid of user to be removed from group members
+        """
         members = set(self.members.split(","))
         if userid in members:
             members.remove(userid)
