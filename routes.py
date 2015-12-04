@@ -169,44 +169,39 @@ def groupDelete(group_name):
             return "Group %s deleted!" % (group_name)
     return "Group %s not found!" % (group_name), 404
 
-#Group member list managment methods
-#Call when you add a group
-#Should send appending lists to User's to add
 def groupToUsers(groupData):
-    groupName = str(groupData["name"])
-    print type(groupName)
-    newList = groupData["members"]
-    #1) send groupName to member to add to list
-    #2) compare against old list to remove group from those members
-    
+    """Used to sync up group data and user data of groups.
+    :param groupData: JSON data of group listing to be updated
+    """
     userQuery = g.db.query(dbDef.User)
     groupQuery = g.db.query(dbDef.Group)
+    
+    groupName = str(groupData["name"])
+    newList = groupData["members"]
     oldList = []
+
     for group in groupQuery.filter(dbDef.Group.name == groupName):
         if group.members != None:
             oldList = group.members.split(",")
     
-    print oldList, newList
-    print list(set(oldList) - set(newList))  # to be deleted
-    print list(set(newList) - set(oldList))  # to be added 
     removeList = set(oldList) - set(newList)
     addList = set(newList) - set(oldList)
 
-    for user in userQuery: #.filter(dbDef.User.userid):
+    for user in userQuery:
         if user.userid in addList:
-            print "adding %s "%(user.userid)
             user.addGroupMembership(groupName)
         if user.userid in removeList:
-            print "deleting %s "%(user.userid)
             user.removeGroupMembership(groupName)
 
 def updateGroups(userData):
-    userid = str(userData["userid"])
-    #1) Groups that don't exist yet == make the group
-    #2) send groups to add
-    #3) remove from groups which it no longer is in
+    """Use to sync group data after changing/adding user data. 
+    Creates group if group does not exist. 
+    :param userData: JSON data of user that is being added/changed
+    """
     userQuery = g.db.query(dbDef.User)
     groupQuery = g.db.query(dbDef.Group)
+    
+    userid = str(userData["userid"])
     newList = userData["groups"]
     oldList = []
 
@@ -214,34 +209,25 @@ def updateGroups(userData):
         if user.groups != None:
             oldList = user.groups.split(",")
 
-    print oldList, newList
     removeList = set(oldList) - set(newList)
     addList = set(newList) - set(oldList)
-    print removeList, addList
+    
     groupList = []
     for group in groupQuery:
         if group.name in addList:
-            print group.name
             group.addUser(userid)
-            print "adding %s to %s" % (userid, group.name)
-        
-        if group.name in removeList:
+        elif group.name in removeList:
             group.removeUser(userid)
-            print "removing %s from %s" % (userid, group.name)
-
         groupList.append(group.name)
 
-    #Creating a new group if it doesn't exist
     for each in addList:
         if each not in groupList:
-            print "creating %s" % (each)
             newGroup = dbDef.Group(name=each, members=userid)
             g.db.add(newGroup)
-            g.db.commit()
+    g.db.commit()
 
 if __name__=='__main__':
     dbDef.init_db() #Will create DB if it doesn't exist
-    global engine 
     engine = create_engine('sqlite:////tmp/Planet.db')#, echo=True) 
     global Session 
     Session = sessionmaker(bind=engine)

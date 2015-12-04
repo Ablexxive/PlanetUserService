@@ -3,3 +3,5 @@ SQL relational DB - Used because small dataset
 If this were going to be used for a larger dataset that needed to be broken up and scaled across servers, would use a NoSql like MongoDB?
 
 Also, sqlite3 is builtin to python
+
+If I were to remake this, I would not have groups stored in User class AND group class. I would have it in one place, Group class, and just iterate through that list to find user memberships. 
