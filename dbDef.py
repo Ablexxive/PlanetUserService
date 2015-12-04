@@ -1,12 +1,17 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import json
 
 Base = declarative_base()
 
-#TODO Comments on the methods :X
 class User(Base):
+    """User class. Contains user records with the following data:
+    :param id: unique record id in the DB
+    :param first_name: First Name of user
+    :param last_name: Last Name of user
+    :param userid: User ID of the user
+    :param groups: List of groups that the user is a member of
+    """
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
@@ -15,14 +20,17 @@ class User(Base):
     userid = Column(String)
     groups = Column(String)
 
-    #TODO: groups 
-
     def __repr__(self):#TODO: add groups to repr
-        return "<User(First Name='%s', Last Name='%s', userid='%s')>" % (
-                    self.first_name, self.last_name, self.userid)
+        """Creates string representation of the user
+        :return String with all user data
+        """
+        return "<User(First Name='%s', Last Name='%s', userid='%s', groups='%s')>" % (
+                    self.first_name, self.last_name, self.userid, self.groups)
     
     def dictRep(self):
-        #Dictionary representation which can then be jsonified 
+        """Creates dictionary representation of the user that is easily jsonified.
+        :return dict with all user data
+        """
         groups = self.groups.split(",")
         data = {"first_name":self.first_name, 
                 "last_name":self.last_name, "userid":self.userid,
@@ -85,5 +93,7 @@ class Group(Base):
         self.members = ",".join(members)
         
 def init_db():
+    """Creates database and creates tables based on the classes defined above. Yay ORM!
+    """
     engine = create_engine('sqlite:////tmp/Planet.db')
     Base.metadata.create_all(engine)
