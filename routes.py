@@ -120,9 +120,9 @@ def groupPost(): #TODO: Should create a EMPTY group w/o JSON...
 
 @app.route('/groups/<group_name>', methods=['PUT'])
 def groupPut(group_name):
-    """Updates group records. Pushes updated records to users too. 
+    """Updates group records. Pushes updated records to users too. Returns 404 if group not found.
     :param group_name: Name of group to be updated
-    :return :
+    :return Conformation of group update 
     """
     jsonData = request.get_json()
 
@@ -130,25 +130,22 @@ def groupPut(group_name):
             filter(dbDef.Group.name == group_name):
         if group != None:
             groupToUsers(jsonData)
-            
-            #Check if users exist first
             existingUserList = []
             for users in g.db.query(dbDef.User):
                 print users
                 if users.userid in jsonData["members"]:
                     existingUserList.append(users.userid)
-                    print "%s included"%(users.userid)
-                else:
-                    print "%s not included"%(users.userid)
-            print existingUserList
             group.members = (','.join(existingUserList))
-            #group.members = (','.join(jsonData["members"])) 
-            g.db.commit() #Commit AFTER calling groupToUsers, to keep old/new lists in memory 
+            g.db.commit()
             return "Group %s updated" % (group_name)
     return "Group %s not found!" % (group_name), 404
 
 @app.route('/groups/<group_name>', methods=['GET'])
 def groupGet(group_name):
+    """Returns group JSON record. Returns 404 if group not found. 
+    :param group_name: name of desired group record
+    :return JSON record for group_name
+    """
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == group_name):
         if group != None:
@@ -157,9 +154,16 @@ def groupGet(group_name):
 
 @app.route('/groups/<group_name>', methods=['DELETE'])
 def groupDelete(group_name):
+    """Deletes group record. Returns 404 if group not found.
+    :param group_name: name of group to be deleted
+    :return: Conformation message that group has been deleted.
+    """
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == group_name):
         if group != None:
+            for user in g.db.query(dbDef.User):
+                if user.userid in group.members:
+                    user.removeGroupMembership(group_name)
             g.db.delete(group)
             g.db.commit()
             return "Group %s deleted!" % (group_name)
