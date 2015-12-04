@@ -99,7 +99,10 @@ def usersDELETE(userid):
 
 @app.route('/groups', methods=['POST'])
 def groupPost(): #TODO: Should create a EMPTY group w/o JSON... 
-    #Creates empty group. POSTs to an existing group should be errors.
+    """Creats empty group. Group name comes from body of request under variable 'name'
+    If group already exists, returns error 
+    :return name of succesfully created group.
+    """
     jsonData = request.get_json()
     data = request.get_data()
     print data
@@ -227,8 +230,11 @@ def updateGroups(userData):
     g.db.commit()
 
 if __name__=='__main__':
+    """Begins flask app and initializes connection to database
+    """
     dbDef.init_db() #Will create DB if it doesn't exist
     engine = create_engine('sqlite:////tmp/Planet.db')#, echo=True) 
     global Session 
     Session = sessionmaker(bind=engine)
+    
     app.run()
