@@ -1,12 +1,12 @@
+import logging
+
 from flask import Flask, request, jsonify, g
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import sqlite3
+
 import dbDef
 
 app = Flask(__name__)
-#make sure to disable this flag 
-app.debug = True
 
 @app.before_request
 def before_request():
@@ -14,6 +14,8 @@ def before_request():
     database and store it in the gloabl variable 'g.db'
     """
     g.db = Session()  #creates session as g.db to add users to
+    logging.info("%s", request)
+    logging.info("%s", request.data)
 
 @app.teardown_request
 def teardown_request(exception):
@@ -22,7 +24,7 @@ def teardown_request(exception):
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()
-    
+
 @app.route('/users', methods=['POST'])
 def usersPOST():
     """Creates a new user record using valid user record (JSON).
@@ -32,22 +34,31 @@ def usersPOST():
     """
     jsonData = request.get_json()
     
+    if jsonData == None or jsonData.get("userid") == None:
+        return "Malformed request", 404
+        #TODO: look up HTTP Code
+    
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == jsonData["userid"]):
         if user != None: 
             #TODO: look up HTTP code
             return "user already exists!", 404
 
-    user = dbDef.User(first_name=jsonData["first_name"],
-                    last_name=jsonData["last_name"],
+    first_name = jsonData.get("first_name", "")
+    last_name = jsonData.get("last_name", "")
+    groups = jsonData.get("groups", [])
+
+
+    user = dbDef.User(first_name=first_name,
+                    last_name=last_name,
                     userid=jsonData["userid"],
-                    groups=(','.join(jsonData["groups"])))
+                    groups=(','.join(groups)))
     
     updateGroups(jsonData)
     
     g.db.add(user)
     g.db.commit()
-    return jsonify(request.get_json())
+    return "<%s> added successfully." % (jsonData.get("userid"))
 
 @app.route('/users/<userid>', methods=['GET'])
 def usersGET(userid):
@@ -57,8 +68,7 @@ def usersGET(userid):
     """
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
-        if user != None:
-            return jsonify(user.dictRep())
+        return jsonify(user.dictRep())
     return "User <%s> not found." % (userid), 404
 
 @app.route('/users/<userid>', methods=['PUT'])
@@ -71,11 +81,10 @@ def usersPUT(userid):
     jsonData = request.get_json()
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
-        if user != None:
-            updateGroups(jsonData)
-            user.updateUser(jsonData)
-            g.db.commit()
-            return jsonify(user.dictRep())
+        updateGroups(jsonData)
+        user.updateUser(jsonData)
+        g.db.commit()
+        return jsonify(user.dictRep())
     return "User not found", 404
 
 @app.route('/users/<userid>', methods=['DELETE'])
@@ -87,30 +96,26 @@ def usersDELETE(userid):
     """
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
-        if user != None:
-            userGroups = user.groups.split(",")
-            for group in g.db.query(dbDef.Group):
-                if group.name in userGroups:
-                    group.removeUser(user.userid)
-            g.db.delete(user)
-            g.db.commit()
-            return "User %s deleted." % (userid)
+        userGroups = user.groups.split(",")
+        for group in g.db.query(dbDef.Group):
+            if group.name in userGroups:
+                group.removeUser(user.userid)
+        g.db.delete(user)
+        g.db.commit()
+        return "User %s deleted." % (userid)
     return "User not found", 404
 
 @app.route('/groups', methods=['POST'])
-def groupPost(): #TODO: Should create a EMPTY group w/o JSON... 
+def groupPost(): 
     """Creats empty group. Group name comes from body of request under variable 'name'
     If group already exists, returns error 
     :return name of succesfully created group.
     """
     jsonData = request.get_json()
-    data = request.get_data()
-    print data
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == jsonData["name"]):
-        if group != None: 
-            #TODO: look up HTTP code
-            return "Group already exists!", 404
+        #TODO: look up HTTP code
+        return "Group already exists!", 404
     
     #group = dbDef.Group(name=data)
     group = dbDef.Group(name=jsonData["name"], members="") #,
@@ -119,8 +124,7 @@ def groupPost(): #TODO: Should create a EMPTY group w/o JSON...
     g.db.add(group)
     g.db.commit()
     return jsonify(request.get_json())
-    #return data
-
+    #TODO:
 @app.route('/groups/<group_name>', methods=['PUT'])
 def groupPut(group_name):
     """Updates group records. Pushes updated records to users too. Returns 404 if group not found.
@@ -131,16 +135,16 @@ def groupPut(group_name):
 
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == group_name):
-        if group != None:
-            groupToUsers(jsonData)
-            existingUserList = []
-            for users in g.db.query(dbDef.User):
-                print users
-                if users.userid in jsonData["members"]:
-                    existingUserList.append(users.userid)
-            group.members = (','.join(existingUserList))
-            g.db.commit()
-            return "Group %s updated" % (group_name)
+        # TODO: Parse and pass data into method as args
+        groupToUsers(jsonData)
+        existingUserList = []
+        # TODO: Filter user list by those in members
+        for user in g.db.query(dbDef.User):
+            if user.userid in jsonData["members"]:
+                existingUserList.append(user.userid)
+        group.members = ','.join(existingUserList)
+        g.db.commit()
+        return "Group %s updated" % (group_name)
     return "Group %s not found!" % (group_name), 404
 
 @app.route('/groups/<group_name>', methods=['GET'])
@@ -163,13 +167,13 @@ def groupDelete(group_name):
     """
     for group in g.db.query(dbDef.Group).\
             filter(dbDef.Group.name == group_name):
-        if group != None:
-            for user in g.db.query(dbDef.User):
-                if user.userid in group.members:
-                    user.removeGroupMembership(group_name)
-            g.db.delete(group)
-            g.db.commit()
-            return "Group %s deleted!" % (group_name)
+        # TODO: Filter users returned by group list containing group_name
+        for user in g.db.query(dbDef.User):
+            if user.userid in group.members:
+                user.removeGroupMembership(group_name)
+        g.db.delete(group)
+        g.db.commit()
+        return "Group %s deleted!" % (group_name)
     return "Group %s not found!" % (group_name), 404
 
 def groupToUsers(groupData):
@@ -202,12 +206,14 @@ def updateGroups(userData):
     :param userData: JSON data of user that is being added/changed
     """
     userQuery = g.db.query(dbDef.User)
+    # TODO: Filter the returned list of groups by newList and oldList?
     groupQuery = g.db.query(dbDef.Group)
     
     userid = str(userData["userid"])
     newList = userData["groups"]
     oldList = []
 
+    # TODO: Either search for the single user or add a break in the if condition
     for user in userQuery.filter(dbDef.User.userid == userid):
         if user.groups != None:
             oldList = user.groups.split(",")
@@ -232,9 +238,12 @@ def updateGroups(userData):
 if __name__=='__main__':
     """Begins flask app and initializes connection to database
     """
-    dbDef.init_db() #Will create DB if it doesn't exist
-    engine = create_engine('sqlite:////tmp/Planet.db')#, echo=True) 
+    logging.root.setLevel(logging.INFO)
+    dbPath = 'sqlite:////tmp/Planet.db'
+    engine = dbDef.get_db(dbPath) #Will create DB if it doesn't exist
+    #engine = create_engine('sqlite:////tmp/Planet.db')#, echo=True) 
     global Session 
     Session = sessionmaker(bind=engine)
     
+    app.debug = True
     app.run()

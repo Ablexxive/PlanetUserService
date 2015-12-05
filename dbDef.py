@@ -20,10 +20,7 @@ class User(Base):
     userid = Column(String)
     groups = Column(String)
 
-    def __repr__(self):#TODO: add groups to repr
-        """Creates string representation of the user
-        :return String with all user data
-        """
+    def __repr__(self):
         return "<User(First Name='%s', Last Name='%s', userid='%s', groups='%s')>" % (
                     self.first_name, self.last_name, self.userid, self.groups)
     
@@ -31,10 +28,12 @@ class User(Base):
         """Creates dictionary representation of the user that is easily jsonified.
         :return dict with all user data
         """
-        groups = self.groups.split(",")
-        data = {"first_name":self.first_name, 
-                "last_name":self.last_name, "userid":self.userid,
-                "groups":self.groups.split(",")}
+        data = {
+                "first_name":self.first_name, 
+                "last_name":self.last_name,
+                "userid":self.userid,
+                "groups":self.groups.split(","),
+        }
         return data
 
     def updateUser(self, jsonData):
@@ -74,9 +73,6 @@ class Group(Base):
     members = Column(String) 
 
     def __repr__(self):
-        """Creates string representation of the group
-        :return String with all group data
-        """
         return "<Group(Name='%s', Members='%s')>" % (
                     self.name, self.members)
 
@@ -87,11 +83,13 @@ class Group(Base):
         members = []
         if self.members != None:
             members = self.members.split(",")
-        data = {"name":self.name, 
-                "members":self.members}
+        data = {
+                "name":self.name, 
+                "members":self.members,
+        }
         return data
 
-    def addUser(self, userid): #TODO: deal with null set
+    def addUser(self, userid): 
         """Adds user to group list using userid
         :param userid: userid of user to be added to group members
         """
@@ -111,8 +109,9 @@ class Group(Base):
             members.remove(userid)
         self.members = ",".join(members)
         
-def init_db():
+def get_db(dbPath, echo=False):
     """Creates database and creates tables based on the classes defined above. Yay ORM!
     """
-    engine = create_engine('sqlite:////tmp/Planet.db')
+    engine = create_engine(dbPath, echo=echo)
     Base.metadata.create_all(engine)
+    return engine
