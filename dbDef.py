@@ -1,3 +1,8 @@
+"""Database Definition file - ORM
+
+Defines classes for User and Group tables 
+"""
+
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker

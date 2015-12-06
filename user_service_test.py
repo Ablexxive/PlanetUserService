@@ -1,3 +1,7 @@
+"""User Service Unit Tests
+
+Unit tests for user_service.py
+"""
 import json
 import os
 import tempfile
@@ -12,7 +16,7 @@ class UserServiceTestCase(unittest.TestCase):
 
     def setUp(self):
         self.db_fd, self.dbPath = tempfile.mkstemp()
-        engine = dbDef.get_db('sqlite:///'+self.dbPath)
+        engine = dbDef.get_db('sqlite:///' + self.dbPath)
         user_service.Session = sessionmaker(bind=engine)
         user_service.app.config['TESTING'] = True
 
@@ -22,7 +26,8 @@ class UserServiceTestCase(unittest.TestCase):
         os.close(self.db_fd)
         os.unlink(self.dbPath)
 
-#Helper methods - 
+#__________________Helper methods_________________#
+    
     def createUser(self):
         userDict = {
                 "first_name":"john",
@@ -193,8 +198,8 @@ class UserServiceTestCase(unittest.TestCase):
 
     #__________More complex logic__________#
 
-#Tests to see if nonexisting groups are created when adding a new user
     def test_user_add_group_creation(self):
+        #Tests to see if nonexisting groups are created when adding a new user
         self.createUser()
         rv = self.app.get('/groups/admin')
         self.assertEqual(rv.status_code, 200)
@@ -202,14 +207,14 @@ class UserServiceTestCase(unittest.TestCase):
         rv = self.app.get('/groups/users')
         self.assertEqual(rv.status_code, 200)
 
-#Tests to see if group list is updated when you delete a user
     def test_user_delete_group_update(self):
+        #Tests to see if group list is updated when you delete a user
         self.createUser()
         rv = self.app.get('/groups/admin')
         self.assertEqual(rv.status_code, 200)
         groupMembers = json.loads(rv.data)['members'] 
         
-       # import pdb;pdb.set_trace()
+        #import pdb;pdb.set_trace()
         self.assertEqual(groupMembers, 'jsmith')
         rv = self.app.delete('/users/jsmith')
         self.assertEqual(rv.status_code, 200)
@@ -219,14 +224,13 @@ class UserServiceTestCase(unittest.TestCase):
         groupMembers = json.loads(rv.data)['members'] 
         self.assertEqual(groupMembers, '')
 
-#tests to see if user data is updated when you delete a group
     def test_group_delete_user_update(self):
+        #Tests to see if user data is updated when you delete a group
         self.createUser()
         rv = self.app.get('/groups/admin')
         self.assertEqual(rv.status_code, 200)
        
         rv = self.app.get('/users/jsmith')
-       # import pdb;pdb.set_trace()
         groupMembership = json.loads(rv.data)['groups'] 
         self.assertEqual(groupMembership, ['admin','users'])
         

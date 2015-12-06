@@ -6,18 +6,18 @@ REST service implemented with Flask that stores, fetches, and updates user recor
 
 Python Version 2.7.10
 
-1. Set up virtual environment with pip:
-    'virtualenv .venv'
+1. Set up virtual environment:
+    `virtualenv .venv`
 2. Activate virtualenv:
-    '. .venv/bin/activate'
+    `. .venv/bin/activate`
 3. Use pip to install requrements:
-    'pip install -r req.txt'
+    `pip install -r req.txt`
 
 ##Running:
 -- Activate virutalenv:
-    '. .venv/bin/activate'
+    `. .venv/bin/activate`
 
 -- Running Service:
-    'python user_service.py'
+    `python user_service.py`
 -- Unit tests:
-    'python user_service_test.py'
+    `python user_service_test.py`
