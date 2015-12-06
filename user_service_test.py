@@ -186,11 +186,21 @@ class UserServiceTestCase(unittest.TestCase):
 #Tests to see if group list is updated when you delete a user
     def test_user_delete_group_update(self):
         self.createUser()
-        rv = self.app.get('/users/jsmith')
-        print rv.data
+        rv = self.app.get('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+        groupMembers = json.loads(rv.data)['members'] 
+        
+       # import pdb;pdb.set_trace()
+        self.assertEqual(groupMembers, 'jsmith')
+        rv = self.app.delete('/users/jsmith')
+        self.assertEqual(rv.status_code, 200)
+        
+        rv = self.app.get('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+        groupMembers = json.loads(rv.data)['members'] 
+        self.assertEqual(groupMembers, '')
+        
 
-        test = self.app.get('/groups/admin')
-        print test.data
 
 #tests to see if user data is updated when you delete a group
 if __name__ == '__main__':
