@@ -1,3 +1,4 @@
+import argparse
 import logging
 
 from flask import Flask, request, jsonify, g
@@ -29,15 +30,15 @@ def teardown_request(exception):
 def usersPOST():
     """Creates a new user record using valid user record (JSON).
     POSTs to existing users returns an error. It also CREATES groups that are 
-    included in the user record if those groups don't exist vis updateGroup method 
-    :return JSON copy of user that is posted successfully 
+    included in the user record if those groups don't exist via updateGroup method 
+    :return string saying that user is added successfully 
     """
     jsonData = request.get_json()
     
     if jsonData == None or jsonData.get("userid") == None:
         return "No JSON data  provided or JSON data does not contain <userid> field", 400
     
-    userid = jsonData.get("userid")
+    userid = str(jsonData.get("userid"))
 
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
@@ -53,7 +54,7 @@ def usersPOST():
                     userid=userid,
                     groups=(','.join(groups)))
     
-    updateGroups(jsonData)
+    updateGroups(userid, groups)
     
     g.db.add(user)
     g.db.commit()
@@ -80,7 +81,9 @@ def usersPUT(userid):
     jsonData = request.get_json()
     for user in g.db.query(dbDef.User).\
             filter(dbDef.User.userid == userid):
-        updateGroups(jsonData)
+        
+        updateGroups(jsonData["userid"], jsonData["groups"])
+
         user.updateUser(jsonData)
         g.db.commit()
         return "Data for <%s> updated"%(userid)
@@ -203,7 +206,7 @@ def groupToUsers(groupName, newList): #groupData):
         if user.userid in removeList:
             user.removeGroupMembership(groupName)
 
-def updateGroups(userData):
+def updateGroups(userid, newList):#userData):
     """Use to sync group data after changing/adding user data. 
     Creates group if group does not exist. 
     :param userData: JSON data of user that is being added/changed
@@ -212,8 +215,8 @@ def updateGroups(userData):
     # TODO: Filter the returned list of groups by newList and oldList?
     groupQuery = g.db.query(dbDef.Group)
     
-    userid = str(userData["userid"])
-    newList = userData["groups"]
+    #userid = str(userData["userid"])
+    #newList = userData["groups"]
     oldList = []
 
     # TODO: Either search for the single user or add a break in the if condition
