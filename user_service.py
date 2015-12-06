@@ -1,4 +1,3 @@
-import argparse
 import logging
 
 from flask import Flask, request, jsonify, g
@@ -245,8 +244,6 @@ if __name__=='__main__':
     """Begins flask app and initializes connection to database
     """
     logging.root.setLevel(logging.INFO)
-    #parser = argparse.ArgumentParser()
-    #parser
    
     dbPath = 'sqlite:////tmp/Planet.db'
     engine = dbDef.get_db(dbPath) #Will create DB if it doesn't exist
@@ -255,6 +252,4 @@ if __name__=='__main__':
     Session = sessionmaker(bind=engine)
     
     app.debug = True
-    app.config['DATABASE'] = dbPath
-    print app.config
     app.run()
