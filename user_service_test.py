@@ -25,19 +25,27 @@ class UserServiceTestCase(unittest.TestCase):
 
 #Helper methods - 
     def createUser(self):
-        user = dbDef.User(first_name="john",
-                        last_name="smith",
-                        userid="jsmith",
-                        groups="admin, users")
-        session = user_service.Session()
-        session.add(user)
-        session.commit()
-    
+        userDict = {
+                "first_name":"john",
+                "last_name":"smith",
+                "userid":"jsmith",
+                "groups":["admin", "users"],
+                }
+        jsonData = json.dumps(userDict)
+        
+        rv = self.app.post('/users', data=jsonData,
+                            content_type='application/json')
+               
+
     def createGroup(self):
-        group = dbDef.Group(name="admin")
-        session = user_service.Session()
-        session.add(group)
-        session.commit()
+        groupDict = {
+                    "name":"admin",
+                    "members":"",
+                    }
+        jsonData = json.dumps(groupDict)
+
+        rv = self.app.post('/groups', data=jsonData,
+                            content_type='application/json')
 
 #Users methods - 
     def test_user_post_fail(self):
@@ -159,19 +167,31 @@ class UserServiceTestCase(unittest.TestCase):
     def test_group_get_fail(self):
         rv = self.app.get('/groups/falseGroup')
         self.assertEqual(rv.status_code, 404)
-   
-   def test_group_get_success(self):
+        
+    def test_group_get_success(self):
         self.createGroup()
         rv = self.app.get('/groups/admin')
         self.assertEqual(rv.status_code, 200)
-   
-   def test_group_delete_fail(self):
-        pass
-   
-   def test_group_delete_success(self):
-        pass
 
+    def test_group_delete_fail(self):
+        rv = self.app.delete('/groups/admin')
+        self.assertEqual(rv.status_code, 404)
+   
+    def test_group_delete_success(self):
+        self.createGroup()
+        rv = self.app.delete('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+
+#More complex logic -
 #Tests to see if group list is updated when you delete a user
+    def test_user_delete_group_update(self):
+        self.createUser()
+        rv = self.app.get('/users/jsmith')
+        print rv.data
+
+        test = self.app.get('/groups/admin')
+        print test.data
+
 #tests to see if user data is updated when you delete a group
 if __name__ == '__main__':
     unittest.main()
