@@ -3,7 +3,6 @@ import os
 import tempfile
 import unittest
 
-from flask import jsonify
 from sqlalchemy.orm import sessionmaker
 
 import dbDef
@@ -47,7 +46,11 @@ class UserServiceTestCase(unittest.TestCase):
         rv = self.app.post('/groups', data=jsonData,
                             content_type='application/json')
 
-#Users methods - 
+
+
+
+#__________________Users methods_________________#
+
     def test_user_post_fail(self):
         self.createUser()
         userDict = {
@@ -121,7 +124,11 @@ class UserServiceTestCase(unittest.TestCase):
         rv = self.app.delete('/users/jsmith')
         self.assertEqual(rv.status_code, 200)
 
-#Group methods
+
+
+
+#__________________Group methods_________________#
+    
     def test_group_post_fail(self):
         self.createGroup()
         jsonData = json.dumps({
@@ -182,7 +189,10 @@ class UserServiceTestCase(unittest.TestCase):
         rv = self.app.delete('/groups/admin')
         self.assertEqual(rv.status_code, 200)
 
-#More complex logic -
+
+
+    #__________More complex logic__________#
+
 #Tests to see if group list is updated when you delete a user
     def test_user_delete_group_update(self):
         self.createUser()
@@ -199,9 +209,24 @@ class UserServiceTestCase(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
         groupMembers = json.loads(rv.data)['members'] 
         self.assertEqual(groupMembers, '')
-        
-
 
 #tests to see if user data is updated when you delete a group
+    def test_group_delete_user_update(self):
+        self.createUser()
+        rv = self.app.get('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+       
+        rv = self.app.get('/users/jsmith')
+       # import pdb;pdb.set_trace()
+        groupMembership = json.loads(rv.data)['groups'] 
+        self.assertEqual(groupMembership, ['admin','users'])
+        
+        rv = self.app.delete('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+
+        rv = self.app.get('/users/jsmith')
+        groupMembership = json.loads(rv.data)['groups']
+        self.assertEqual(groupMembership, ['users'])
+        
 if __name__ == '__main__':
     unittest.main()
