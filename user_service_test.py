@@ -193,6 +193,15 @@ class UserServiceTestCase(unittest.TestCase):
 
     #__________More complex logic__________#
 
+#Tests to see if nonexisting groups are created when adding a new user
+    def test_user_add_group_creation(self):
+        self.createUser()
+        rv = self.app.get('/groups/admin')
+        self.assertEqual(rv.status_code, 200)
+
+        rv = self.app.get('/groups/users')
+        self.assertEqual(rv.status_code, 200)
+
 #Tests to see if group list is updated when you delete a user
     def test_user_delete_group_update(self):
         self.createUser()
@@ -227,6 +236,6 @@ class UserServiceTestCase(unittest.TestCase):
         rv = self.app.get('/users/jsmith')
         groupMembership = json.loads(rv.data)['groups']
         self.assertEqual(groupMembership, ['users'])
-        
+
 if __name__ == '__main__':
     unittest.main()
