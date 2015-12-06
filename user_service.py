@@ -251,5 +251,5 @@ if __name__=='__main__':
     global Session 
     Session = sessionmaker(bind=engine)
     
-    app.debug = True
+    app.debug = False #True
     app.run()
