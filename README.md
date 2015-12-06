@@ -21,3 +21,5 @@ Python Version 2.7.10
     `python user_service.py`
 -- Unit tests:
     `python user_service_test.py`
+
+- Sample valid JSON records for user/group PUT/POST verbs provided.
