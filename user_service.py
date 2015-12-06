@@ -36,7 +36,7 @@ def usersPOST():
     jsonData = request.get_json()
     
     if jsonData == None or jsonData.get("userid") == None:
-        return "No JSON data  provided or JSON data does not contain <userid> field", 400
+        return "No JSON data provided or JSON data does not contain <userid> field", 400
     
     userid = str(jsonData.get("userid"))
 
@@ -245,6 +245,9 @@ if __name__=='__main__':
     """Begins flask app and initializes connection to database
     """
     logging.root.setLevel(logging.INFO)
+    #parser = argparse.ArgumentParser()
+    #parser
+   
     dbPath = 'sqlite:////tmp/Planet.db'
     engine = dbDef.get_db(dbPath) #Will create DB if it doesn't exist
     
@@ -252,4 +255,6 @@ if __name__=='__main__':
     Session = sessionmaker(bind=engine)
     
     app.debug = True
+    app.config['DATABASE'] = dbPath
+    print app.config
     app.run()
